@@ -1,7 +1,9 @@
 fastapi
 uvicorn[standard]
 pydantic
+pydantic[email]
 sqlalchemy
 python-multipart
 passlib[bcrypt]
 python-jose[cryptography]
+email-validator
