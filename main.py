@@ -2,7 +2,7 @@
 from fastapi import FastAPI, Depends
 from fastapi.middleware.cors import CORSMiddleware
 
-from database import Base, engine, get_db
+from database import Base, engine
 import models
 
 # Routers
@@ -11,72 +11,40 @@ from rides import router as rides_router
 from wallet import router as wallet_router
 from admin import router as admin_router
 
-
-# ------------------------------------------------------
-# IMPORTANT: Create all PostgreSQL tables ON STARTUP
-# ------------------------------------------------------
-def create_tables():
-    """
-    Ensure all tables exist in the PostgreSQL database.
-    Render requires tables to be created programmatically.
-    """
-    print("🔵 Creating database tables (if not exists)...")
-    Base.metadata.create_all(bind=engine)
-    print("✅ Tables ready.")
-
-
-# ------------------------------------------------------
-# FastAPI App
-# ------------------------------------------------------
+# Initialize the app
 app = FastAPI(title="Shamor Ride API")
 
-
-# ------------------------------------------------------
-# CORS (Accept Frontend + Mobile + Direct Testing)
-# ------------------------------------------------------
+# CORS configuration
 origins = [
     "https://starmo-ride-frontend.onrender.com",
     "https://starmo-ride-frontend.render.com",
-    "https://shamor-riding-frontend.onrender.com",
-    "http://localhost:5500",
-    "http://127.0.0.1:5500",
-    "*",  # Allow temporarily for testing
+    "*",  # development fallback
 ]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=origins,       # Allow your frontend
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-
-# ------------------------------------------------------
-# STARTUP EVENT (Runs Once on Render Deployment)
-# ------------------------------------------------------
+# Ensure PostgreSQL tables are created on startup
 @app.on_event("startup")
 def on_startup():
-    create_tables()
+    print("Creating PostgreSQL tables...")
+    Base.metadata.create_all(bind=engine)
+    print("Tables created.")
 
-
-# ------------------------------------------------------
-# Include Routers
-# ------------------------------------------------------
+# Include routers
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(rides_router, prefix="/rides", tags=["Rides"])
 app.include_router(wallet_router, prefix="/wallet", tags=["Wallet"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 
-
-# ------------------------------------------------------
-# FIXED — Missing Profile Endpoint
-# ------------------------------------------------------
+# AUTH PROFILE ENDPOINT (fix for /auth/me)
 @app.get("/auth/me")
 def get_profile(user=Depends(get_current_user)):
-    """
-    Used by frontend after login.
-    """
     return {
         "id": user.id,
         "email": user.email,
@@ -85,7 +53,7 @@ def get_profile(user=Depends(get_current_user)):
         "created_at": user.created_at,
     }
 
-
+# Root
 @app.get("/")
 def root():
-    return {"status": "Shamor-Ride backend running 🚀"}
+    return {"status": "Shamor-Ride backend running with PostgreSQL"}
