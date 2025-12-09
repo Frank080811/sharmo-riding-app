@@ -8,12 +8,12 @@ import schemas
 from auth import get_current_admin
 from surge import get_city_heatmap, compute_surge
 
-router = APIRouter(prefix="/admin", tags=["admin"])
+router = APIRouter(prefix="/admin", tags=["Admin"])
 
 
 @router.get("/overview", response_model=schemas.AdminOverviewOut)
 def overview(
-    db: Session = get_db(),
+    db: Session = Depends(get_db),
     admin: models.User = Depends(get_current_admin),
 ):
     now = datetime.utcnow()
@@ -43,7 +43,7 @@ def overview(
 
 @router.get("/heatmap", response_model=schemas.HeatmapOut)
 def heatmap(
-    db: Session = get_db(),
+    db: Session = Depends(get_db),
     admin: models.User = Depends(get_current_admin),
 ):
     heat = get_city_heatmap(db)
@@ -52,7 +52,7 @@ def heatmap(
 
 
 @router.get("/heatmap/surge")
-def heatmap_surge(db: Session = get_db()):
+def heatmap_surge(db: Session = Depends(get_db)):
     heat = get_city_heatmap(db)
     surge = compute_surge(heat)
     return {"multiplier": surge}
@@ -60,7 +60,7 @@ def heatmap_surge(db: Session = get_db()):
 
 @router.get("/users", response_model=list[schemas.UserOut])
 def list_users(
-    db: Session = get_db(),
+    db: Session = Depends(get_db),
     admin: models.User = Depends(get_current_admin),
 ):
     users = db.query(models.User).all()
