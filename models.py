@@ -17,10 +17,12 @@ class User(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     email = Column(String, unique=True, index=True, nullable=False)
-    hashed_password = Column(String, nullable=False)
+    hashed_password = Column(String, nullable=False)   # <-- correct
     full_name = Column(String)
     role = Column(Enum(UserRole), default=UserRole.rider)
-    created_at = Column(DateTime, default=datetime.utcnow)
+    is_active = Column(Boolean, default=True)
+    rating = Column(Float, default=5.0)
+
 
     rides_as_rider = relationship("Ride", foreign_keys="Ride.rider_id", back_populates="rider")
     rides_as_driver = relationship("Ride", foreign_keys="Ride.driver_id", back_populates="driver")
