@@ -33,12 +33,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ✔ ROUTERS LOADED WITH PROPER PREFIXES
-app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+# ❌ REMOVE prefix="/auth" (because auth.py already has it)
+app.include_router(auth_router)             # <-- FIXED
 app.include_router(rides_router, prefix="/rides", tags=["Rides"])
 app.include_router(wallet_router, prefix="/wallet", tags=["Wallet"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
-app.include_router(ws_router)  # websocket has its own paths
+app.include_router(ws_router)
 
 @app.get("/")
 def root():
