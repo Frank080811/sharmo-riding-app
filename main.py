@@ -9,16 +9,15 @@ from auth import router as auth_router
 from rides import router as rides_router
 from wallet import router as wallet_router
 from admin import router as admin_router
-from realtime import router as ws_router  # your websocket routes
+from realtime import router as ws_router
 
 app = FastAPI(title="Shamor Ride API")
 
 origins = [
     "https://starmo-ride-frontend.onrender.com",
     "https://starmo-ride-frontend.render.com",
-    "*",  # keep for now so local testing works
+    "*",
 ]
-
 
 @app.on_event("startup")
 def on_startup():
@@ -35,16 +34,15 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Routers (each already has its own prefix)
-app.include_router(auth_router)
-app.include_router(rides_router)
-app.include_router(wallet_router)
-app.include_router(admin_router)
+
+# ✅ FIX — ADD PREFIXES SO URLS ARE CORRECT
+app.include_router(auth_router, prefix="/auth", tags=["Auth"])
+app.include_router(rides_router, prefix="/rides", tags=["Rides"])
+app.include_router(wallet_router, prefix="/wallet", tags=["Wallet"])
+app.include_router(admin_router, prefix="/admin", tags=["Admin"])
 app.include_router(ws_router)
 
 
 @app.get("/")
 def root():
     return {"status": "Shamor-Ride backend running with PostgreSQL"}
-
-
