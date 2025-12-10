@@ -1,3 +1,4 @@
+# schemas.py
 from pydantic import BaseModel, EmailStr
 from typing import Optional, List
 from datetime import datetime
@@ -18,9 +19,11 @@ class UserOut(UserBase):
     id: int
     role: UserRole
     rating: float
+    created_at: datetime       # ✅ NEW
 
     class Config:
         orm_mode = True
+
 
 
 class RideCreate(BaseModel):

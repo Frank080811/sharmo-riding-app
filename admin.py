@@ -1,3 +1,4 @@
+# admin.py
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from datetime import datetime, timedelta
@@ -8,7 +9,7 @@ import schemas
 from auth import get_current_admin
 from surge import get_city_heatmap, compute_surge
 
-router = APIRouter(prefix="/admin", tags=["Admin"])
+router = APIRouter(prefix="/admin", tags=["admin"])
 
 
 @router.get("/overview", response_model=schemas.AdminOverviewOut)

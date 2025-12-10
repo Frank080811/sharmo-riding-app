@@ -14,9 +14,9 @@ import schemas
 
 SECRET_KEY = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
 ALGORITHM = "HS256"
-ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
+ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24  # 1 day
 
-router = APIRouter()
+router = APIRouter(prefix="/auth", tags=["auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/auth/token")
@@ -46,7 +46,7 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     user = models.User(
         email=user_data.email,
         full_name=user_data.full_name,
-        hashed_password=hash_password(user_data.password),  # <-- correct
+        hashed_password=hash_password(user_data.password),  # ✅ correct field
         role=user_data.role,
     )
     db.add(user)
@@ -71,7 +71,6 @@ def get_current_user(
     token: str = Depends(oauth2_scheme),
     db: Session = Depends(get_db),
 ) -> models.User:
-
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate token",
