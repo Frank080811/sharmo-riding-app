@@ -5,6 +5,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from database import Base, engine
 import models
 
+# Routers
 from auth import router as auth_router
 from rides import router as rides_router
 from wallet import router as wallet_router
@@ -33,11 +34,11 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ❌ REMOVE prefix="/auth" (because auth.py already has it)
-app.include_router(auth_router)             # <-- FIXED
-app.include_router(rides_router, prefix="/rides", tags=["Rides"])
-app.include_router(wallet_router, prefix="/wallet", tags=["Wallet"])
-app.include_router(admin_router, prefix="/admin", tags=["Admin"])
+# IMPORTANT: DO NOT ADD PREFIXES HERE, ROUTERS ALREADY HAVE THEM
+app.include_router(auth_router)    # already has prefix="/auth"
+app.include_router(rides_router)   # already has prefix="/rides"
+app.include_router(wallet_router)  # already has prefix="/wallet"
+app.include_router(admin_router)   # already has prefix="/admin"
 app.include_router(ws_router)
 
 @app.get("/")

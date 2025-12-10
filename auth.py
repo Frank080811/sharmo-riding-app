@@ -16,7 +16,6 @@ SECRET_KEY = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60 * 24
 
-# ✅ FIXED: Add prefix="/auth"
 router = APIRouter(prefix="/auth", tags=["Auth"])
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -38,9 +37,6 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
     return jwt.encode(to_encode, SECRET_KEY, algorithm=ALGORITHM)
 
 
-# -------------------------------
-# SIGNUP
-# -------------------------------
 @router.post("/signup")
 def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == user_data.email).first()
@@ -60,9 +56,6 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
     return {"message": "User created successfully"}
 
 
-# -------------------------------
-# LOGIN
-# -------------------------------
 @router.post("/token")
 def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
     user = db.query(models.User).filter(models.User.email == form.username).first()
@@ -74,14 +67,7 @@ def login(form: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get
     return {"access_token": access_token, "token_type": "bearer"}
 
 
-# -------------------------------
-# CURRENT USER
-# -------------------------------
-def get_current_user(
-    token: str = Depends(oauth2_scheme),
-    db: Session = Depends(get_db),
-) -> models.User:
-
+def get_current_user(token: str = Depends(oauth2_scheme), db: Session = Depends(get_db)):
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Could not validate token",
@@ -90,10 +76,8 @@ def get_current_user(
 
     try:
         payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        user_id: int = int(payload.get("sub"))
-        if user_id is None:
-            raise credentials_exception
-    except JWTError:
+        user_id = int(payload.get("sub"))
+    except:
         raise credentials_exception
 
     user = db.query(models.User).filter(models.User.id == user_id).first()
@@ -103,9 +87,6 @@ def get_current_user(
     return user
 
 
-# -------------------------------
-# ADMIN
-# -------------------------------
 def get_current_admin(user: models.User = Depends(get_current_user)):
     if user.role != models.UserRole.admin:
         raise HTTPException(status_code=403, detail="Admins only")
