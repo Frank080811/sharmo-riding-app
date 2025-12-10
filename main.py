@@ -25,7 +25,6 @@ def on_startup():
     Base.metadata.create_all(bind=engine)
     print("Done.")
 
-
 app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
@@ -34,14 +33,12 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-
-# ✅ FIX — ADD PREFIXES SO URLS ARE CORRECT
+# ✔ ROUTERS LOADED WITH PROPER PREFIXES
 app.include_router(auth_router, prefix="/auth", tags=["Auth"])
 app.include_router(rides_router, prefix="/rides", tags=["Rides"])
 app.include_router(wallet_router, prefix="/wallet", tags=["Wallet"])
 app.include_router(admin_router, prefix="/admin", tags=["Admin"])
-app.include_router(ws_router)
-
+app.include_router(ws_router)  # websocket has its own paths
 
 @app.get("/")
 def root():
