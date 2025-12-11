@@ -72,25 +72,26 @@ def signup(user_data: schemas.UserCreate, background: BackgroundTasks, db: Sessi
     return {"message": "User created successfully"}
 
 
-
-
 def send_welcome_email(to_email: str):
     msg = MIMEText(
         "Welcome to Shamor-Rides!\n\nYour account was created successfully.\nEnjoy your rides!"
     )
-
     msg["Subject"] = "Welcome to Shamor-Rides"
     msg["From"] = SMTP_FROM
     msg["To"] = to_email
 
     try:
-        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+        # TLS instead of SSL (REQUIRED for Render)
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT) as server:
+            server.starttls()
             server.login(SMTP_USER, SMTP_PASSWORD)
             server.sendmail(SMTP_FROM, to_email, msg.as_string())
-        print("Welcome email sent successfully to:", to_email)
+
+        print("Welcome email sent to:", to_email)
 
     except Exception as e:
         print("Email sending failed:", e)
+
 
 
 @router.post("/token")
