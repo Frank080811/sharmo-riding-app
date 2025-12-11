@@ -1,10 +1,15 @@
 # main.py
+import os
+
+from dotenv import load_dotenv
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from dotenv import load_dotenv
 
 from database import Base, engine
 import models
+
+# Load .env BEFORE importing modules that read env vars (like auth.py)
+load_dotenv()
 
 # Routers
 from auth import router as auth_router
@@ -13,56 +18,58 @@ from wallet import router as wallet_router
 from admin import router as admin_router
 from realtime import router as ws_router
 
-load_dotenv()   # Load .env values properly
-
 
 app = FastAPI(title="Shamor Ride API")
 
 
-# -------------------------------------------------------------------
-# ✔ FIXED CORS — NO MIXING "*" WITH SPECIFIC DOMAINS
-# -------------------------------------------------------------------
-# "*" breaks cookies / auth headers on browsers and can cause 401 issues.
-
+# CORS origins: keep frontend domains + "*" for now
 origins = [
     "https://starmo-ride-frontend.onrender.com",
     "https://starmo-ride-frontend.render.com",
-    "http://localhost:5500",            # for local testing
-    "http://localhost:8000",
+    "*",
 ]
 
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=origins,
-    allow_credentials=True,          # needed for Authorization header
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
 
-
-# -------------------------------------------------------------------
-# ✔ TABLE CREATION (SAFE FOR RENDER)
-# -------------------------------------------------------------------
 @app.on_event("startup")
 def on_startup():
+    """
+    Create tables on startup. With SQLAlchemy this is safe to call; it
+    will only create missing tables.
+    """
     print("Creating PostgreSQL tables...")
     Base.metadata.create_all(bind=engine)
     print("Done.")
 
 
-# -------------------------------------------------------------------
-# ✔ ROUTERS (NO DUPLICATE PREFIXES)
-# -------------------------------------------------------------------
-app.include_router(auth_router)     # /auth
-app.include_router(rides_router)    # /rides
-app.include_router(wallet_router)   # /wallet
-app.include_router(admin_router)    # /admin
-app.include_router(ws_router)       # /ws
+# CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,          # you can tighten this later
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 
-# -------------------------------------------------------------------
-# ✔ ROOT ENDPOINT
-# -------------------------------------------------------------------
+# IMPORTANT: routers ALREADY have prefixes defined in each file
+# auth.py      -> prefix="/auth"
+# rides.py     -> prefix="/rides"
+# wallet.py    -> prefix="/wallet"
+# admin.py     -> prefix="/admin"
+# realtime.py  -> websocket routes under /ws/...
+app.include_router(auth_router)
+app.include_router(rides_router)
+app.include_router(wallet_router)
+app.include_router(admin_router)
+app.include_router(ws_router)
+
+
 @app.get("/")
 def root():
     return {"status": "Shamor-Ride backend running with PostgreSQL"}
+
+
+# Optional: simple health endpoint for Render / monitoring
+@app.get("/health")
+def health():
+    return {"ok": True}
