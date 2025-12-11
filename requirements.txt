@@ -10,3 +10,4 @@ python-jose[cryptography]==3.5.0
 email-validator==2.3.0
 python-dotenv==1.2.1
 psycopg2-binary
+python-dotenv

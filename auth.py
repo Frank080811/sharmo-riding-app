@@ -1,4 +1,5 @@
 # auth.py
+import os
 from datetime import datetime, timedelta
 from typing import Optional
 
@@ -11,6 +12,17 @@ from sqlalchemy.orm import Session
 from database import get_db
 import models
 import schemas
+import smtplib
+from email.mime.text import MIMEText
+
+from fastapi import BackgroundTasks
+
+SMTP_HOST = os.getenv("SMTP_HOST")
+SMTP_PORT = int(os.getenv("SMTP_PORT", "465"))
+SMTP_USER = os.getenv("SMTP_USER")
+SMTP_PASSWORD = os.getenv("SMTP_PASSWORD")
+SMTP_FROM = os.getenv("SMTP_FROM")
+
 
 SECRET_KEY = "CHANGE_ME_TO_A_LONG_RANDOM_SECRET"
 ALGORITHM = "HS256"
@@ -38,7 +50,7 @@ def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -
 
 
 @router.post("/signup")
-def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
+def signup(user_data: schemas.UserCreate, background: BackgroundTasks, db: Session = Depends(get_db)):
     existing = db.query(models.User).filter(models.User.email == user_data.email).first()
     if existing:
         raise HTTPException(status_code=400, detail="Email already registered")
@@ -49,11 +61,36 @@ def signup(user_data: schemas.UserCreate, db: Session = Depends(get_db)):
         hashed_password=hash_password(user_data.password),
         role=user_data.role,
     )
+
     db.add(user)
     db.commit()
     db.refresh(user)
 
+    # Run email in background (non-blocking)
+    background.add_task(send_welcome_email, user.email)
+
     return {"message": "User created successfully"}
+
+
+
+
+def send_welcome_email(to_email: str):
+    msg = MIMEText(
+        "Welcome to Shamor-Rides!\n\nYour account was created successfully.\nEnjoy your rides!"
+    )
+
+    msg["Subject"] = "Welcome to Shamor-Rides"
+    msg["From"] = SMTP_FROM
+    msg["To"] = to_email
+
+    try:
+        with smtplib.SMTP_SSL(SMTP_HOST, SMTP_PORT) as server:
+            server.login(SMTP_USER, SMTP_PASSWORD)
+            server.sendmail(SMTP_FROM, to_email, msg.as_string())
+        print("Welcome email sent successfully to:", to_email)
+
+    except Exception as e:
+        print("Email sending failed:", e)
 
 
 @router.post("/token")

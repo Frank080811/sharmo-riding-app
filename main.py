@@ -11,6 +11,10 @@ from rides import router as rides_router
 from wallet import router as wallet_router
 from admin import router as admin_router
 from realtime import router as ws_router
+from dotenv import load_dotenv
+
+load_dotenv()
+
 
 app = FastAPI(title="Shamor Ride API")
 
